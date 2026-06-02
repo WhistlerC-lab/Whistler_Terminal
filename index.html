@@ -1,0 +1,793 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>WHISTLER TERMINAL v1.8</title>
+<link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Rajdhani:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg:#030508; --bg2:#060a12; --bg3:#090e1a; --bg4:#0c1220;
+  --bd:#122033; --bd2:#1a2d47;
+  --text:#aaccdd; --text2:#7fa1c3; --text3:#5a80a6;
+  --bull:#00ff88; --bull2:#00c866;
+  --bear:#ff3366;
+  --neut:#4466ff; --warn:#ffaa00; --gold:#ffcc44;
+  --white:#e0f2fe; --cyan:#00ddff; --dim:#0a1520;
+  --crown:#ffd700; --fire:#ff6b35; --bell:#4fc3f7;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{background:var(--bg);color:var(--text);font-family:'Rajdhani','Segoe UI',sans-serif;font-size:14px;min-height:100vh;}
+.mono{font-family:'Share Tech Mono',monospace;}
+body::before{content:'';position:fixed;inset:0;background:repeating-linear-gradient(0deg,transparent,transparent 2px,rgba(0,0,0,.03) 2px,rgba(0,0,0,.03) 3px);pointer-events:none;z-index:9999;}
+
+/* HEADER */
+header{position:relative;z-index:10;padding:13px 22px 11px;border-bottom:1px solid var(--bd);background:linear-gradient(180deg,#060a14 0%,var(--bg2) 100%);display:flex;align-items:center;justify-content:space-between;}
+.h-main{font-family:'Share Tech Mono',monospace;font-size:15px;color:var(--cyan);letter-spacing:.22em;text-shadow:0 0 24px rgba(0,221,255,.55);}
+.h-ver{font-size:8.5px;color:var(--text3);letter-spacing:.1em;padding:2px 6px;border:1px solid var(--bd);}
+.h-score-legend{display:flex;gap:10px;align-items:center;}
+.sl-item{font-size:10px;color:var(--text3);font-family:'Share Tech Mono',monospace;display:flex;align-items:center;gap:3px;}
+
+/* CONTROLS */
+.controls{position:relative;z-index:10;padding:12px 22px;border-bottom:1px solid var(--bd);background:var(--bg3);display:flex;align-items:flex-end;gap:16px;flex-wrap:wrap;}
+.cg{display:flex;flex-direction:column;gap:5px;}
+.clabel{font-size:10.5px;color:var(--text2);letter-spacing:.14em;text-transform:uppercase;}
+select{background:var(--bg4);border:1px solid var(--bd);color:var(--white);font-family:'Rajdhani',sans-serif;font-size:12px;padding:6px 12px;border-radius:2px;outline:none;}
+.scan-btn{padding:8px 24px;background:transparent;border:1px solid var(--cyan);color:var(--cyan);font-family:'Rajdhani',sans-serif;font-size:13px;font-weight:700;letter-spacing:.1em;cursor:pointer;transition:all .2s;border-radius:2px;}
+.scan-btn.run{border-color:var(--warn);color:var(--warn);animation:pg 1s ease-in-out infinite;}
+@keyframes pg{0%,100%{box-shadow:0 0 4px rgba(255,170,0,.3)}50%{box-shadow:0 0 16px rgba(255,170,0,.6)}}
+.stop-btn{padding:8px 14px;background:transparent;border:1px solid var(--bear);color:var(--bear);font-family:'Rajdhani',sans-serif;font-size:12px;font-weight:700;cursor:pointer;border-radius:2px;display:none;}
+.auto-label{color:var(--bull);font-size:13px;font-weight:bold;cursor:pointer;display:flex;align-items:center;gap:6px;}
+
+/* TELEGRAM PANEL */
+.tg-panel{position:relative;z-index:10;padding:10px 22px;border-bottom:1px solid var(--bd);background:linear-gradient(90deg,rgba(0,221,255,.03),transparent 70%);display:flex;align-items:center;gap:12px;flex-wrap:wrap;}
+.tg-label{font-size:10.5px;color:var(--cyan);letter-spacing:.12em;text-transform:uppercase;font-weight:700;white-space:nowrap;}
+.tg-input{background:var(--bg4);border:1px solid var(--bd);color:var(--white);font-family:'Share Tech Mono',monospace;font-size:11px;padding:6px 10px;border-radius:2px;outline:none;width:240px;}
+.tg-input:focus{border-color:var(--cyan);}
+.tg-input.narrow{width:140px;}
+.tg-btn{padding:6px 14px;background:transparent;border:1px solid var(--cyan);color:var(--cyan);font-family:'Rajdhani',sans-serif;font-size:12px;font-weight:700;cursor:pointer;border-radius:2px;white-space:nowrap;}
+.tg-btn:hover{background:rgba(0,221,255,.08);}
+.tg-status{font-size:11px;color:var(--text3);font-family:'Share Tech Mono',monospace;}
+.tg-auto-label{color:var(--bell);font-size:12px;font-weight:bold;cursor:pointer;display:flex;align-items:center;gap:5px;white-space:nowrap;}
+
+/* SCORE RANK BOARD */
+.rank-board{position:relative;z-index:10;padding:12px 22px;background:var(--bg2);border-bottom:1px solid var(--bd);display:flex;gap:10px;overflow-x:auto;align-items:center;}
+.rb-title{font-size:11.5px;color:var(--gold);font-weight:bold;letter-spacing:.1em;min-width:110px;text-transform:uppercase;line-height:1.4;}
+.rb-item{display:flex;flex-direction:column;background:rgba(0,221,255,.04);border:1px solid rgba(0,221,255,.2);padding:8px 11px;border-radius:4px;min-width:160px;gap:5px;cursor:pointer;transition:background .2s;}
+.rb-item:hover{background:rgba(0,221,255,.09);}
+.rb-item.crown{border-color:rgba(255,215,0,.5);background:rgba(255,215,0,.04);}
+.rb-item.fire{border-color:rgba(255,107,53,.4);background:rgba(255,107,53,.03);}
+.rb-sym{font-family:'Share Tech Mono',monospace;font-size:14px;font-weight:bold;color:var(--white);display:flex;align-items:baseline;gap:6px;}
+.rb-score{font-family:'Share Tech Mono',monospace;font-size:18px;font-weight:bold;}
+.rb-score.crown{color:var(--crown);}
+.rb-score.fire{color:var(--fire);}
+.rb-score.bell{color:var(--bell);}
+.rb-meta{font-size:10px;color:var(--text3);font-family:'Share Tech Mono',monospace;}
+.rb-tfs{display:flex;gap:4px;}
+.rb-tf{font-size:9px;padding:2px 5px;border-radius:2px;background:var(--bd2);color:var(--text3);font-family:'Share Tech Mono',monospace;}
+.rb-tf.on{background:rgba(0,255,136,.15);color:var(--bull);border:1px solid rgba(0,255,136,.3);}
+
+/* PROGRESS & FILTER */
+.prog{position:relative;z-index:10;padding:7px 22px;border-bottom:1px solid var(--bd);background:var(--bg);}
+.prog-head{display:flex;justify-content:space-between;margin-bottom:5px;}
+.prog-msg,.prog-pct{font-size:12px;color:var(--text2);font-family:'Share Tech Mono',monospace;}
+.prog-track{height:2px;background:var(--dim);border-radius:1px;overflow:hidden;}
+.prog-fill{height:100%;width:0%;background:linear-gradient(90deg,var(--bull2),var(--bull));transition:width .3s;}
+.fbar{position:relative;z-index:10;padding:9px 22px;border-bottom:1px solid var(--bd);display:flex;gap:7px;align-items:center;flex-wrap:wrap;}
+.sbox{background:var(--bg3);border:1px solid var(--bd);color:var(--white);font-size:13px;padding:6px 12px;border-radius:2px;width:150px;outline:none;}
+.fbtn{padding:6px 12px;background:transparent;border:1px solid var(--bd);color:var(--text2);font-size:11.5px;cursor:pointer;letter-spacing:.06em;border-radius:2px;transition:all .15s;}
+.fa.active{border-color:var(--cyan);color:var(--cyan);background:rgba(0,221,255,.05);}
+.f-br{border-color:rgba(0,255,136,.4);color:var(--bull);}
+.f-br.active{background:rgba(0,255,136,.15);border-color:var(--bull);}
+.f-crown{border-color:rgba(255,215,0,.6);color:var(--crown);font-weight:bold;}
+.f-crown.active{background:rgba(255,215,0,.12);border-color:var(--crown);}
+.f-fire{border-color:rgba(255,107,53,.5);color:var(--fire);}
+.f-fire.active{background:rgba(255,107,53,.12);border-color:var(--fire);}
+.rcount{margin-left:auto;font-size:11px;color:var(--text3);font-family:'Share Tech Mono',monospace;}
+
+/* TABLE */
+.tbl-wrap{position:relative;z-index:10;overflow-x:auto;padding:0 22px 14px;}
+table{width:100%;border-collapse:collapse;margin-top:8px;}
+thead th{text-align:left;padding:11px 8px;font-size:11px;font-weight:700;color:var(--text2);letter-spacing:.05em;border-bottom:1px solid var(--bd);cursor:pointer;white-space:nowrap;}
+thead th:hover{color:var(--cyan);}
+tbody tr{border-bottom:1px solid rgba(13,24,40,.8);cursor:pointer;transition:background .12s;}
+tbody tr:hover{background:var(--bg2);}
+tbody td{padding:11px 8px;vertical-align:middle;white-space:nowrap;}
+.sym-n{font-weight:700;color:var(--white);font-size:15px;font-family:'Share Tech Mono',monospace;display:flex;align-items:center;gap:6px;}
+.tf-badge{display:inline-block;padding:3px 6px;border-radius:2px;font-size:10px;font-weight:bold;font-family:'Share Tech Mono',monospace;background:var(--bd2);color:var(--text3);opacity:.5;}
+.tf-badge.on{opacity:1;background:rgba(0,255,136,.15);color:var(--bull);border:1px solid rgba(0,255,136,.4);}
+.tf-badge.stage1{opacity:.85;color:var(--warn);border:1px solid rgba(255,170,0,.35);background:rgba(255,170,0,.06);}
+
+/* SCORE BADGE */
+.score-badge{display:inline-flex;align-items:center;gap:4px;padding:4px 9px;border-radius:3px;font-family:'Share Tech Mono',monospace;font-weight:bold;font-size:13px;}
+.score-badge.crown{background:rgba(255,215,0,.12);color:var(--crown);border:1px solid rgba(255,215,0,.4);}
+.score-badge.fire{background:rgba(255,107,53,.12);color:var(--fire);border:1px solid rgba(255,107,53,.35);}
+.score-badge.bell{background:rgba(79,195,247,.1);color:var(--bell);border:1px solid rgba(79,195,247,.3);}
+.score-badge.zero{background:transparent;color:var(--text3);font-size:11px;}
+.mtf-all{background:linear-gradient(90deg,rgba(255,215,0,.15),rgba(255,100,100,.12));border:1px solid var(--gold);color:var(--gold);padding:2px 6px;border-radius:2px;font-size:10px;font-weight:bold;font-family:'Share Tech Mono',monospace;}
+
+/* DD PANEL */
+.dd-panel{position:relative;z-index:10;margin:0 22px 12px;border:1px solid var(--bd2);border-radius:3px;background:var(--bg2);display:none;}
+.dd-panel.open{display:block;}
+.dd-hdr{padding:10px 16px;border-bottom:1px solid var(--bd);display:flex;align-items:center;justify-content:space-between;background:linear-gradient(90deg,rgba(0,221,255,.04),transparent 60%);}
+.dd-sym{font-size:18px;font-weight:700;color:var(--white);font-family:'Share Tech Mono',monospace;}
+.dd-cls{cursor:pointer;color:var(--text2);background:none;border:none;font-size:15px;}
+.dd-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(215px,1fr));}
+.dd-sec{padding:12px 14px;border-right:1px solid var(--bd);border-bottom:1px solid var(--bd);}
+.dd-stitle{font-size:11px;color:var(--text2);margin-bottom:9px;}
+.kv{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;}
+.kv-k{font-size:11.5px;color:var(--text2);}
+.kv-v{font-size:12px;font-family:'Share Tech Mono',monospace;color:var(--white);}
+
+/* SCORE LEGEND PANEL */
+.score-legend-bar{position:relative;z-index:10;padding:7px 22px;border-bottom:1px solid var(--bd);background:rgba(12,18,32,.6);display:flex;gap:20px;align-items:center;flex-wrap:wrap;}
+.sl-block{display:flex;align-items:center;gap:6px;font-size:11px;color:var(--text3);font-family:'Share Tech Mono',monospace;}
+.sl-icon{font-size:12px;}
+
+@media(max-width:768px){
+  body{font-size:13px;}
+  header,.controls,.tg-panel,.rank-board,.prog,.fbar,.tbl-wrap,.dd-panel{padding-left:12px;padding-right:12px;}
+  .controls{flex-direction:column;align-items:stretch;gap:12px;}
+  .tg-panel{flex-direction:column;align-items:stretch;gap:8px;}
+  .tg-input{width:100%;}
+  .tg-input.narrow{width:100%;}
+  select,.scan-btn,.stop-btn{width:100%;}
+  .fbar{flex-wrap:wrap;gap:7px;}
+  .sbox{width:100%;}
+  .fbtn{flex:1 1 calc(50% - 4px);text-align:center;}
+  .dd-grid{grid-template-columns:1fr;}
+}
+</style>
+</head>
+<body>
+
+<header>
+  <div>
+    <div class="h-main">◈ WHISTLER TERMINAL</div>
+    <div class="h-ver">v1.8 · 4-Factor MTF · MTF Score Engine · Telegram Push</div>
+  </div>
+</header>
+
+<!-- 점수 범례 -->
+<div class="score-legend-bar">
+  <span class="sl-block"><span class="sl-icon">👑</span> 최우선 20pt+ (퍼펙트 MTF = 22pt~)</span>
+  <span class="sl-block"><span class="sl-icon">🔥</span> 강조 10~19pt (2개 시간대 정렬)</span>
+  <span class="sl-block"><span class="sl-icon">🔔</span> 일반 5~9pt &nbsp;</span>
+  <span class="sl-block" style="color:var(--text3);opacity:.6">5pt 미만 = 노이즈 차단</span>
+  <span class="sl-block" style="margin-left:auto;color:var(--text2)">①상승 ②NetLongs↑ ③CVD↑ ④롱계좌비율↓</span>
+</div>
+
+<!-- 스캔 컨트롤 -->
+<div class="controls">
+  <div class="cg">
+    <div class="clabel">▸ 스캔 풀</div>
+    <select id="topN" onchange="handleTopNChange()">
+      <option value="50">Top 50</option>
+      <option value="100">Top 100</option>
+      <option value="150" selected>Top 150</option>
+      <option value="200">Top 200</option>
+    </select>
+  </div>
+  <div style="margin-left:auto;display:flex;gap:12px;align-items:center;flex-wrap:wrap;">
+    <label class="auto-label">
+      <input type="checkbox" id="autoScanCb" onchange="toggleAutoScan()" style="width:16px;height:16px;">
+      <span id="autoScanText">⏱ 자동 DB 수집</span>
+    </label>
+    <button class="stop-btn" id="stopBtn" onclick="doStop()">■ STOP</button>
+    <button class="scan-btn" id="scanBtn" onclick="doScan(true)">▶ 수동 1회 스캔</button>
+  </div>
+</div>
+
+<!-- 텔레그램 설정 (UI 숨김, 내부 상수로 관리) -->
+<div class="tg-panel">
+  <span class="tg-label">✈ 텔레그램</span>
+  <label class="tg-auto-label">
+    <input type="checkbox" id="tgAutoCb" style="width:14px;height:14px;" checked>
+    스캔 완료 시 자동 전송
+  </label>
+  <div class="cg" style="flex-direction:row;align-items:center;gap:6px;">
+    <span style="font-size:10.5px;color:var(--text2);letter-spacing:.1em;">전송 주기</span>
+    <select id="tgInterval" style="padding:5px 10px;font-size:12px;">
+      <option value="5">5분</option>
+      <option value="10">10분</option>
+      <option value="30">30분</option>
+    </select>
+  </div>
+  <button class="tg-btn" onclick="testTelegram()">테스트 전송</button>
+  <span class="tg-status" id="tgStatus">—</span>
+</div>
+
+<!-- 점수 기반 랭킹 보드 -->
+<div class="rank-board" id="rankBoard">
+  <div class="rb-title">📊 점수 TOP<br>랭킹</div>
+  <div style="color:var(--text3);font-size:12px;">스캔 완료 후 표시됩니다</div>
+</div>
+
+<div class="prog">
+  <div class="prog-head">
+    <div class="prog-msg" id="pMsg">Ready — 스캔을 시작하거나 자동 수집을 켜세요</div>
+    <div class="prog-pct" id="pPct">—</div>
+  </div>
+  <div class="prog-track"><div class="prog-fill" id="pFill"></div></div>
+</div>
+
+<!-- 필터 바 -->
+<div class="fbar">
+  <input class="sbox" id="searchBox" placeholder="Symbol 검색…" oninput="renderTable()">
+  <button class="fbtn fa active" onclick="setFilter('ALL',this)">ALL</button>
+  <button class="fbtn f-crown" onclick="setFilter('CROWN',this)">👑 20pt+</button>
+  <button class="fbtn f-fire" onclick="setFilter('FIRE',this)">🔥 10pt+</button>
+  <button class="fbtn f-br" onclick="setFilter('BR_ALL',this)">퍼펙트 MTF</button>
+  <button class="fbtn f-br" onclick="setFilter('BR_15M',this)">15m</button>
+  <button class="fbtn f-br" onclick="setFilter('BR_1H',this)">1H</button>
+  <button class="fbtn f-br" onclick="setFilter('BR_4H',this)">4H</button>
+  <div class="rcount" id="rcount"></div>
+</div>
+
+<!-- 상세 패널 -->
+<div class="dd-panel" id="ddPanel">
+  <div class="dd-hdr">
+    <div class="dd-sym" id="dd-sym">—</div>
+    <button class="dd-cls" onclick="closeDd()">✕</button>
+  </div>
+  <div class="dd-grid" id="dd-grid"></div>
+</div>
+
+<!-- 결과 테이블 -->
+<div class="tbl-wrap">
+  <table id="tbl">
+    <thead>
+      <tr>
+        <th onclick="sortBy('symbol')">Symbol</th>
+        <th onclick="sortBy('score')" style="color:var(--cyan)">▼ 점수</th>
+        <th onclick="sortBy('hitCount')">60분 누적</th>
+        <th>15m</th><th>1H</th><th>4H</th>
+        <th onclick="sortBy('pricePct')">24H Δ</th>
+      </tr>
+    </thead>
+    <tbody id="tbody"></tbody>
+  </table>
+</div>
+
+<script>
+// ════════════════════════════════════════════════════════
+//  상태
+// ════════════════════════════════════════════════════════
+let results = [], running = false, stopFlag = false;
+let sort = { col:'score', dir:-1 };
+let activeFilter = 'ALL';
+let scanHistoryDB = {};
+let autoScanTimer = null;
+
+const FAPI = 'https://fapi.binance.com';
+
+// ════════════════════════════════════════════════════════
+//  MTF 점수 엔진
+// ════════════════════════════════════════════════════════
+const SCORE = {
+  TF:    { '15m':1, '1h':2, '4h':4 },
+  ALIGN: { '15m+1h':3, '15m+4h':5, '1h+4h':6, '15m+1h+4h':15 },
+  PERSIST: { 1:1, 2:2, 3:5 },
+  THRESHOLD: 5,
+  level(s) {
+    if (s >= 20) return { icon:'👑', cls:'crown', label:'최우선' };
+    if (s >= 10) return { icon:'🔥', cls:'fire',  label:'강조' };
+    if (s >=  5) return { icon:'🔔', cls:'bell',  label:'일반' };
+    return { icon:'', cls:'zero', label:'' };
+  }
+};
+
+function calcScore(s15, s1, s4, prevHistory) {
+  let score = 0;
+  if (s15) score += SCORE.TF['15m'];
+  if (s1)  score += SCORE.TF['1h'];
+  if (s4)  score += SCORE.TF['4h'];
+  const all3  = s15 && s1 && s4;
+  const p15_1 = s15 && s1, p15_4 = s15 && s4, p1_4 = s1 && s4;
+  if      (all3)  score += SCORE.ALIGN['15m+1h+4h'];
+  else if (p15_4) score += SCORE.ALIGN['15m+4h'];
+  else if (p1_4)  score += SCORE.ALIGN['1h+4h'];
+  else if (p15_1) score += SCORE.ALIGN['15m+1h'];
+  const pc = (prevHistory||[]).length;
+  if      (pc >= 3) score += SCORE.PERSIST[3];
+  else if (pc >= 2) score += SCORE.PERSIST[2];
+  else if (pc >= 1) score += SCORE.PERSIST[1];
+  return score;
+}
+
+// ════════════════════════════════════════════════════════
+//  설정 상수 / 지표
+// ════════════════════════════════════════════════════════
+const CFG = {
+  NETLONG_RISE: 0.005, ACCT_FALL: -0.005,
+  TREND_WIN: 5, POS_LIMIT: 30, KLINE_LIMIT: 220
+};
+
+const TA = {
+  ema(arr, len) {
+    let res = new Array(arr.length).fill(null);
+    if (arr.length < len) return res;
+    const k = 2/(len+1); let sum = 0;
+    for (let i=0; i<len; i++) sum += arr[i];
+    let prev = sum/len; res[len-1] = prev;
+    for (let i=len; i<arr.length; i++) { prev = (arr[i]-prev)*k+prev; res[i]=prev; }
+    return res;
+  },
+  sma(arr, len) {
+    let res = new Array(arr.length).fill(null);
+    if (arr.length < len) return res;
+    let sum = 0; for (let i=0; i<len; i++) sum += arr[i];
+    res[len-1] = sum/len;
+    for (let i=len; i<arr.length; i++) { sum += arr[i]-arr[i-len]; res[i]=sum/len; }
+    return res;
+  },
+  stdev(arr, len, smaArr) {
+    let res = new Array(arr.length).fill(null);
+    if (arr.length < len) return res;
+    for (let i=len-1; i<arr.length; i++) {
+      let s=0; for (let j=0; j<len; j++) s += Math.pow(arr[i-j]-smaArr[i],2);
+      res[i] = Math.sqrt(s/len);
+    }
+    return res;
+  }
+};
+
+const _avg = a => a.length ? a.reduce((s,x)=>s+x,0)/a.length : 0;
+function pctTrend(arr, win) {
+  const v = arr.filter(x => x!=null && isFinite(x));
+  if (v.length < win*2) return null;
+  const recent = _avg(v.slice(-win)), earlier = _avg(v.slice(-win*2,-win));
+  if (!earlier) return null;
+  return (recent-earlier)/Math.abs(earlier);
+}
+
+// ════════════════════════════════════════════════════════
+//  신호 함수
+// ════════════════════════════════════════════════════════
+function runStage1(candles) {
+  if (!candles || candles.length < 210) return { stage1:false };
+  const C=candles.map(x=>x.c), O=candles.map(x=>x.o), V=candles.map(x=>x.v), BV=candles.map(x=>x.buyVol);
+  const ema12=TA.ema(C,12), ema25=TA.ema(C,25), ema50=TA.ema(C,50), ema200=TA.ema(C,200);
+  let cumDelta=[], cSum=0;
+  BV.forEach((bv,i)=>{ cSum+=bv-(V[i]-bv); cumDelta.push(cSum); });
+  const cvdEma=TA.ema(cumDelta,10);
+  const bbSma=TA.sma(C,20), bbStd=TA.stdev(C,20,bbSma);
+  const bbw=bbSma.map((s,i)=>s?(4*bbStd[i])/s:0), bbwMa=TA.sma(bbw,50);
+  const i=C.length-2;
+  if (ema200[i]===null||bbwMa[i]===null) return { stage1:false };
+  const p_sig = C[i]>ema12[i] && ema12[i]>ema25[i]*0.999 && C[i]>O[i];
+  const ma_ok = ema50[i]>ema200[i];
+  const trend = p_sig && ma_ok;
+  const cvd_rising = cvdEma[i]>=cvdEma[i-1]||cvdEma[i]>cvdEma[i-2];
+  const breakout = C[i]>Math.max(C[i-1],C[i-2],C[i-3],C[i-4],C[i-5]);
+  const vol_ok = bbw[i]>bbwMa[i]*0.8;
+  return { stage1:trend&&cvd_rising, trend, cvd_rising, p_sig, ma_ok, breakout, vol_ok };
+}
+
+async function fetchPositioning(symbol, period) {
+  const [oiHist,posRatio,acctRatio] = await Promise.all([
+    fetchJSON(`${FAPI}/futures/data/openInterestHist?symbol=${symbol}&period=${period}&limit=${CFG.POS_LIMIT}`),
+    fetchJSON(`${FAPI}/futures/data/topLongShortPositionRatio?symbol=${symbol}&period=${period}&limit=${CFG.POS_LIMIT}`),
+    fetchJSON(`${FAPI}/futures/data/globalLongShortAccountRatio?symbol=${symbol}&period=${period}&limit=${CFG.POS_LIMIT}`)
+  ]);
+  return checkPositioning(oiHist,posRatio,acctRatio);
+}
+
+function checkPositioning(oiHist,posRatio,acctRatio) {
+  let netlong_up=null, acct_down=null, netLongChg=null, acctChg=null;
+  try {
+    const oiVal=(oiHist||[]).map(x=>+x.sumOpenInterestValue);
+    const longFrac=(posRatio||[]).map(x=>+x.longAccount);
+    const n=Math.min(oiVal.length,longFrac.length);
+    if (n>=CFG.TREND_WIN*2) {
+      const est=[];
+      for (let k=0;k<n;k++) est.push(oiVal[oiVal.length-n+k]*longFrac[longFrac.length-n+k]);
+      netLongChg=pctTrend(est,CFG.TREND_WIN);
+    }
+    netlong_up = netLongChg==null ? null : netLongChg>CFG.NETLONG_RISE;
+    const lsr=(acctRatio||[]).map(x=>+x.longShortRatio);
+    acctChg=pctTrend(lsr,CFG.TREND_WIN);
+    acct_down = acctChg==null ? null : acctChg<CFG.ACCT_FALL;
+  } catch(e){}
+  return { netlong_up, acct_down, netLongChg, acctChg };
+}
+
+// ════════════════════════════════════════════════════════
+//  네트워크
+// ════════════════════════════════════════════════════════
+const sleep = ms => new Promise(r=>setTimeout(r,ms));
+
+async function fetchJSON(url, retries=3) {
+  for (let a=0; a<=retries; a++) {
+    try {
+      const res=await fetch(url);
+      if (res.status===429||res.status===418) {
+        const ra=parseInt(res.headers.get('Retry-After'))||0;
+        await sleep(ra?ra*1000:Math.min(1500*(a+1),8000));
+        continue;
+      }
+      if (!res.ok) throw new Error('HTTP '+res.status);
+      return await res.json();
+    } catch(e) {
+      if (a===retries) throw e;
+      await sleep(700*(a+1));
+    }
+  }
+}
+
+// ════════════════════════════════════════════════════════
+//  텔레그램
+// ════════════════════════════════════════════════════════
+// ── 텔레그램 인증 상수 (UI 노출 없이 내부 관리) ──
+const TG_TOKEN = '8623987930:AAGAKiAwMVcpZFHZ8kJCUAXIuyESCkSGck0';
+const TG_CHAT  = '7151485201';
+
+function getTgCreds() {
+  return { token: TG_TOKEN, chat: TG_CHAT };
+}
+
+async function sendTelegram(text) {
+  const { token, chat } = getTgCreds();
+  if (!token || !chat) { setTgStatus('⚠ 토큰·채팅ID 입력 필요', '#ff9'); return false; }
+  try {
+    const res = await fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({ chat_id:chat, text, parse_mode:'HTML', disable_web_page_preview:true })
+    });
+    if (res.ok) { setTgStatus('✅ 전송 성공', 'var(--bull)'); return true; }
+    const j = await res.json();
+    setTgStatus('❌ '+j.description, 'var(--bear)'); return false;
+  } catch(e) { setTgStatus('❌ 네트워크 오류', 'var(--bear)'); return false; }
+}
+
+function setTgStatus(msg, color='var(--text3)') {
+  const el = document.getElementById('tgStatus');
+  el.textContent = msg;
+  el.style.color = color;
+}
+
+async function testTelegram() {
+  setTgStatus('전송 중…');
+  const kst = new Date(Date.now()+9*3600000).toISOString().replace('T',' ').slice(0,16);
+  await sendTelegram(`✅ WHISTLER 연결 테스트\n${kst} KST\n터미널이 정상 작동 중입니다.`);
+}
+
+// 스캔 완료 후 텔레그램 리포트 빌드 & 전송
+async function sendScanReport() {
+  // ALL 필터와 동일 기준: 시간대 하나라도 신호 있거나 60분 누적 있으면 포함
+  const sig = results
+    .filter(r => r.br15m.signal || r.br1h.signal || r.br4h.signal || r.hitCount > 0)
+    .sort((a, b) => b.score - a.score);
+
+  if (!sig.length) {
+    setTgStatus('신호 없음 — 전송 생략', 'var(--text3)');
+    return;
+  }
+
+  const crown = sig.filter(s => s.score >= 20);
+  const fire  = sig.filter(s => s.score >= 10 && s.score < 20);
+  const bell  = sig.filter(s => s.score >= 5  && s.score < 10);
+  const watch = sig.filter(s => s.score < 5);   // 신호는 있지만 점수 낮은 종목
+
+  const MAX_PT = 27; // 이론상 최고점 (퍼펙트MTF 22 + 지속3회 5)
+  const bar = (score) => {
+    const filled = Math.round((score / MAX_PT) * 9);
+    return '■'.repeat(filled) + '□'.repeat(9 - filled);
+  };
+  const tfTxt = r => {
+    const t15 = r.br15m.signal ? '15m✅' : r.br15m.stage1 ? '15m◐' : '';
+    const t1h  = r.br1h.signal  ? '1H✅'  : r.br1h.stage1  ? '1H◐'  : '';
+    const t4h  = r.br4h.signal  ? '4H✅'  : r.br4h.stage1  ? '4H◐'  : '';
+    return [t15, t1h, t4h].filter(Boolean).join(' ') || '—';
+  };
+  const line = r => {
+    const base  = r.symbol.replace('USDT','').padEnd(8);
+    const tf    = tfTxt(r).padEnd(10);
+    const pct   = ((r.pricePct>=0?'+':'')+r.pricePct+'%').padStart(7);
+    const cnt   = (r.hitCount+'회').padStart(3);
+    return `${SCORE.level(r.score).icon} ${base} ${tf} ${pct}  ${cnt}  [${bar(r.score)} ${r.score}pt]`;
+  };
+
+  const intervalMin = document.getElementById('tgInterval').value;
+  const kst = new Date(Date.now()+9*3600000).toISOString().replace('T',' ').slice(0,16);
+  let msg = `<b>WHISTLER</b>  ${kst} KST  <i>(${intervalMin}분 누적)</i>\n`;
+  msg += `────────────────\n`;
+  if (crown.length) { msg+=`\n👑 <b>최우선 20pt+</b>\n<code>`; msg+=crown.map(line).join('\n'); msg+=`</code>\n`; }
+  if (fire.length)  { msg+=`\n🔥 <b>강조 10~19pt</b>\n<code>`;  msg+=fire.map(line).join('\n');  msg+=`</code>\n`; }
+  if (bell.length)  { msg+=`\n🔔 <b>일반 5~9pt</b>\n<code>`;   msg+=bell.map(line).join('\n');  msg+=`</code>\n`; }
+  if (watch.length) { msg+=`\n👀 <b>주시 (5pt 미만)</b>\n<code>`; msg+=watch.map(line).join('\n'); msg+=`</code>\n`; }
+  msg += `\n👑${crown.length} 🔥${fire.length} 🔔${bell.length} 👀${watch.length}  총 ${sig.length}건`;
+
+  setTgStatus('전송 중…');
+  await sendTelegram(msg);
+}
+
+// ════════════════════════════════════════════════════════
+//  UI 유틸
+// ════════════════════════════════════════════════════════
+function getScanIntervalMs() {
+  return +document.getElementById('topN').value >= 200 ? 120000 : 60000;
+}
+function handleTopNChange() {
+  const n = +document.getElementById('topN').value;
+  document.getElementById('autoScanText').textContent = `⏱ ${n>=200?'2':'1'}분 자동 수집`;
+  if (document.getElementById('autoScanCb').checked) {
+    clearInterval(autoScanTimer);
+    autoScanTimer = setInterval(()=>{ if(!running) doScan(); }, getScanIntervalMs());
+  }
+}
+function setProgress(pct, msg) {
+  document.getElementById('pFill').style.width = Math.min(100,Math.max(0,pct))+'%';
+  document.getElementById('pMsg').textContent  = msg||'';
+  document.getElementById('pPct').textContent  = pct>0 ? Math.round(pct)+'%' : '—';
+}
+function doStop() { stopFlag=true; }
+function toggleAutoScan() {
+  if (document.getElementById('autoScanCb').checked) {
+    doScan();
+    autoScanTimer = setInterval(()=>{ if(!running) doScan(); }, getScanIntervalMs());
+  } else { clearInterval(autoScanTimer); }
+}
+
+// ════════════════════════════════════════════════════════
+//  스캔 메인
+// ════════════════════════════════════════════════════════
+let scanErrors = 0;
+let pass1 = 0, pass2 = 0;
+let lastTgSentAt = 0;
+const getTgIntervalMs = () => parseInt(document.getElementById('tgInterval').value) * 60 * 1000;
+
+async function doScan(isManual=false) {
+  if (running) return;
+  running=true; stopFlag=false; results=[]; scanErrors=0; pass1=0; pass2=0;
+  document.getElementById('scanBtn').textContent='⟳ 수집 중…';
+  document.getElementById('scanBtn').classList.add('run');
+  if (isManual) document.getElementById('stopBtn').style.display='flex';
+
+  setProgress(5,'바이낸스 티커 로딩 중…');
+  let symbols=[];
+  try {
+    const data = await fetchJSON(`${FAPI}/fapi/v1/ticker/24hr`);
+    const topN = +document.getElementById('topN').value;
+    symbols = data
+      .filter(t=>t.symbol.endsWith('USDT')&&parseFloat(t.quoteVolume)>500000)
+      .sort((a,b)=>parseFloat(b.quoteVolume)-parseFloat(a.quoteVolume))
+      .slice(0,topN)
+      .map(t=>({symbol:t.symbol, pricePct:+t.priceChangePercent}));
+  } catch(e) { setProgress(0,'에러'); return finishScan(); }
+
+  const parseK = d => d.map(c=>({o:+c[1],h:+c[2],l:+c[3],c:+c[4],v:+c[5],buyVol:+c[9]}));
+  const now = Date.now();
+  const PERIODS = {'15m':'15m','1h':'1h','4h':'4h'};
+  const BATCH_SIZE = 3;
+
+  for (let i=0; i<symbols.length&&!stopFlag; i+=BATCH_SIZE) {
+    const batch = symbols.slice(i,i+BATCH_SIZE);
+    await Promise.all(batch.map(async ({symbol,pricePct})=>{
+      try {
+        const [k15,k1,k4] = await Promise.all([
+          fetchJSON(`${FAPI}/fapi/v1/klines?symbol=${symbol}&interval=15m&limit=${CFG.KLINE_LIMIT}`),
+          fetchJSON(`${FAPI}/fapi/v1/klines?symbol=${symbol}&interval=1h&limit=${CFG.KLINE_LIMIT}`),
+          fetchJSON(`${FAPI}/fapi/v1/klines?symbol=${symbol}&interval=4h&limit=${CFG.KLINE_LIMIT}`)
+        ]);
+        const tf = {'15m':runStage1(parseK(k15)),'1h':runStage1(parseK(k1)),'4h':runStage1(parseK(k4))};
+
+        await Promise.all(Object.keys(tf).map(async key=>{
+          const o=tf[key];
+          if (o.stage1) {
+            pass1++;
+            Object.assign(o, await fetchPositioning(symbol,PERIODS[key]));
+            o.s2=true;
+            o.signal=!!(o.trend&&o.cvd_rising&&o.netlong_up&&o.acct_down);
+            if (o.signal) pass2++;
+          } else { o.s2=false; o.signal=false; }
+        }));
+
+        const br15m=tf['15m'], br1h=tf['1h'], br4h=tf['4h'];
+        const s15=!!br15m.signal, s1=!!br1h.signal, s4=!!br4h.signal;
+        const brAll = s15 && s1 && s4;
+
+        if (!scanHistoryDB[symbol]) scanHistoryDB[symbol]=[];
+
+        // ① 60분 초과 먼저 정리
+        scanHistoryDB[symbol] = scanHistoryDB[symbol].filter(x => now - x.time <= 3600000);
+
+        // ② 이전 누적 기반으로 점수 계산 (push 전)
+        const prevHistory = [...scanHistoryDB[symbol]];
+        const score = calcScore(s15, s1, s4, prevHistory);
+
+        // ③ 신호가 하나라도 있으면 점수와 무관하게 누적 — 이게 핵심 수정
+        if (s15 || s1 || s4) {
+          scanHistoryDB[symbol].push({time:now, b15:s15, b1:s1, b4:s4, all:brAll, score});
+        }
+
+        const history  = scanHistoryDB[symbol];
+        const hitCount = history.length;
+        const hit15m   = history.filter(x=>x.b15).length;
+        const hit1h    = history.filter(x=>x.b1).length;
+        const hit4h    = history.filter(x=>x.b4).length;
+        const maxScore = history.length ? Math.max(...history.map(x=>x.score||0)) : 0;
+
+        results.push({symbol,pricePct,br15m,br1h,br4h,brAll,score,hitCount,hit15m,hit1h,hit4h,maxScore});
+      } catch(e){ scanErrors++; }
+    }));
+
+    renderTable(); updateRankingBoard();
+    const done=Math.min(i+BATCH_SIZE,symbols.length);
+    setProgress(5+(done/symbols.length)*95,
+      `${done}/${symbols.length} 완료${scanErrors?` (실패 ${scanErrors})`:''}  |  1차통과 ${pass1}  |  신호 ${pass2}`);
+    await sleep(800);
+  }
+
+  setProgress(100,`스캔 완료  |  1차통과 ${pass1}  |  최종신호 ${pass2}  |  포착 ${results.filter(r=>r.score>=SCORE.THRESHOLD).length}건`);
+  updateRankingBoard();
+
+  // 자동 전송: 선택한 주기가 지났을 때만
+  if (document.getElementById('tgAutoCb').checked) {
+    const now2 = Date.now();
+    const intervalMs = getTgIntervalMs();
+    const elapsed = now2 - lastTgSentAt;
+    const remaining = Math.ceil((intervalMs - elapsed) / 60000);
+    if (elapsed >= intervalMs) {
+      lastTgSentAt = now2;   // 신호 유무 관계없이 항상 갱신 → 카운트다운 정상 작동
+      await sendScanReport();
+    } else {
+      setTgStatus(`다음 전송까지 ${remaining}분 남음`, 'var(--text3)');
+    }
+  }
+
+  finishScan();
+}
+
+function finishScan() {
+  running=false; stopFlag=false;
+  document.getElementById('scanBtn').textContent='▶ 수동 1회 스캔';
+  document.getElementById('scanBtn').classList.remove('run');
+  document.getElementById('stopBtn').style.display='none';
+  renderTable();
+}
+
+// ════════════════════════════════════════════════════════
+//  랭킹 보드
+// ════════════════════════════════════════════════════════
+function updateRankingBoard() {
+  const board=document.getElementById('rankBoard');
+  const top = results.filter(r=>r.score>=SCORE.THRESHOLD).sort((a,b)=>b.score-a.score).slice(0,8);
+  if (!top.length) {
+    board.innerHTML=`<div class="rb-title">📊 점수 TOP<br>랭킹</div><div style="color:var(--text3);font-size:12px;">아직 포착 없음</div>`;
+    return;
+  }
+  let html=`<div class="rb-title">📊 점수 TOP<br>랭킹</div>`;
+  top.forEach(r=>{
+    const lv=SCORE.level(r.score);
+    const allBadge = r.brAll ? ' <span style="font-size:10px;color:var(--cyan)">⚡ALL</span>' : '';
+    html+=`<div class="rb-item ${lv.cls}" onclick="openDd('${r.symbol}')">
+      <div class="rb-sym"><span class="rb-score ${lv.cls}">${lv.icon}${r.score}pt</span> ${r.symbol.replace('USDT','')}${allBadge}</div>
+      <div class="rb-tfs">
+        <span class="rb-tf ${r.hit15m>0?'on':''}">15m·${r.hit15m}</span>
+        <span class="rb-tf ${r.hit1h>0?'on':''}">1H·${r.hit1h}</span>
+        <span class="rb-tf ${r.hit4h>0?'on':''}">4H·${r.hit4h}</span>
+      </div>
+      <div class="rb-meta">${r.pricePct>=0?'+':''}${r.pricePct}% · 60분${r.hitCount}회 · max ${r.maxScore}pt</div>
+    </div>`;
+  });
+  board.innerHTML=html;
+}
+
+// ════════════════════════════════════════════════════════
+//  테이블 / 필터
+// ════════════════════════════════════════════════════════
+function setFilter(f, btn) {
+  activeFilter=f;
+  document.querySelectorAll('.fbtn').forEach(el=>el.classList.remove('active'));
+  if (btn) btn.classList.add('active');
+  renderTable();
+}
+
+function filterData() {
+  const q=document.getElementById('searchBox').value.toLowerCase().trim();
+  return results.filter(r=>{
+    if (q&&!r.symbol.toLowerCase().includes(q)) return false;
+    if (activeFilter==='CROWN')  return r.score>=20;
+    if (activeFilter==='FIRE')   return r.score>=10;
+    if (activeFilter==='BR_ALL') return r.brAll===true;
+    if (activeFilter==='BR_15M') return r.br15m.signal===true;
+    if (activeFilter==='BR_1H')  return r.br1h.signal===true;
+    if (activeFilter==='BR_4H')  return r.br4h.signal===true;
+    // ALL: 최소 1개 시간대 신호 충족 종목만
+    return r.br15m.signal || r.br1h.signal || r.br4h.signal || r.hitCount > 0;
+  });
+}
+
+function sortBy(col) {
+  sort.dir = sort.col===col ? sort.dir*-1 : -1;
+  sort.col = col;
+  renderTable();
+}
+
+function renderTable() {
+  let data=filterData();
+  data.sort((a,b)=> a[sort.col]<b[sort.col]?sort.dir : a[sort.col]>b[sort.col]?-sort.dir : 0);
+  document.getElementById('rcount').textContent=data.length?`${data.length} symbols`:'';
+  const tbody=document.getElementById('tbody');
+  if (!data.length) {
+    tbody.innerHTML=`<tr><td colspan="7" style="text-align:center;padding:40px;color:var(--text3)">포착된 코인이 없습니다</td></tr>`;
+    return;
+  }
+  const tfBadge=(o,label)=>{
+    if (o.signal)  return `<span class="tf-badge on">${label}</span>`;
+    if (o.stage1)  return `<span class="tf-badge stage1">${label} 1차</span>`;
+    return `<span class="tf-badge">—</span>`;
+  };
+  tbody.innerHTML=data.map(r=>{
+    const base=r.symbol.replace('USDT','');
+    const lv=SCORE.level(r.score);
+    // 점수 배지 (현재 스캔 점수)
+    const scoreBadge = r.score >= SCORE.THRESHOLD
+      ? `<span class="score-badge ${lv.cls}">${lv.icon} ${r.score}pt</span>`
+      : `<span class="score-badge zero">—</span>`;
+    // 퍼펙트 MTF 배지: brAll(3개 동시 신호)일 때만
+    const titleExtra = r.brAll ? ' <span class="mtf-all">⚡ALL</span>' : '';
+    let hitHtml=`<div style="display:flex;flex-direction:column;gap:3px;">`;
+    if (r.hitCount===0) {
+      hitHtml+=`<span style="color:var(--text3);font-size:12px;">—</span>`;
+    } else {
+      const col = r.hitCount>=5 ? `var(--gold)` : r.hitCount>=3 ? `var(--bull)` : `var(--white)`;
+      hitHtml+=`<span style="font-family:'Share Tech Mono';font-weight:bold;color:${col};">${r.hitCount}회</span>`;
+      hitHtml+=`<span style="font-size:10px;color:var(--text3);font-family:'Share Tech Mono';">15m:${r.hit15m} 1H:${r.hit1h} 4H:${r.hit4h}</span>`;
+      if (r.maxScore > 0) hitHtml+=`<span style="font-size:10px;color:var(--text3);font-family:'Share Tech Mono';">최고 ${r.maxScore}pt</span>`;
+    }
+    hitHtml+=`</div>`;
+    return `<tr onclick="openDd('${r.symbol}')">
+      <td><div class="sym-n">${base}${titleExtra}</div></td>
+      <td>${scoreBadge}</td>
+      <td>${hitHtml}</td>
+      <td>${tfBadge(r.br15m,'15m')}</td>
+      <td>${tfBadge(r.br1h,'1H')}</td>
+      <td>${tfBadge(r.br4h,'4H')}</td>
+      <td style="color:${r.pricePct>=0?'var(--bull)':'var(--bear)'};font-weight:bold;">${r.pricePct>=0?'+':''}${r.pricePct}%</td>
+    </tr>`;
+  }).join('');
+}
+
+// ════════════════════════════════════════════════════════
+//  상세 패널
+// ════════════════════════════════════════════════════════
+function generateChecklistHtml(title, d) {
+  if (!d) return `<div class="dd-sec"><div class="dd-stitle">${title}</div><div class="kv"><span class="kv-k">데이터 부족</span></div></div>`;
+  const row=(label,ok,extra='')=>{
+    const col=ok===true?'var(--bull)':ok===false?'var(--bear)':'var(--text3)';
+    const mk=ok===true?'✅':ok===false?'⬜':'—';
+    return `<div class="kv"><span class="kv-k">${label}</span><span class="kv-v" style="color:${col}">${mk}${extra}</span></div>`;
+  };
+  const pct=v=>v==null?'':` <span style="color:var(--text3);font-size:10px">(${v>=0?'+':''}${(v*100).toFixed(1)}%)</span>`;
+  const head=d.signal?'(신호 👑)':d.stage1?'(1차 통과)':'(대기)';
+  const headCol=d.signal?'var(--bull)':d.stage1?'var(--warn)':'var(--text2)';
+  return `<div class="dd-sec">
+    <div class="dd-stitle" style="color:${headCol}">${title} ${head}</div>
+    ${row('① 상승추세 (EMA 정배열)',d.trend)}
+    ${row('③ CVD 증가',d.cvd_rising)}
+    ${row('② Net Longs 증가',d.s2?d.netlong_up:null, d.s2?pct(d.netLongChg):'')}
+    ${row('④ 롱계좌비율 감소',d.s2?d.acct_down:null, d.s2?pct(d.acctChg):'')}
+    <div class="kv" style="margin-top:6px;opacity:.5"><span class="kv-k" style="font-size:10px">참고 — 5봉돌파 ${d.breakout?'✅':'⬜'} · 변동성 ${d.vol_ok?'✅':'⬜'}</span></div>
+  </div>`;
+}
+
+function openDd(symbol) {
+  const r=results.find(x=>x.symbol===symbol); if (!r) return;
+  const lv=SCORE.level(r.score);
+  document.getElementById('dd-sym').innerHTML=
+    `${r.symbol} <span class="score-badge ${lv.cls}" style="font-size:14px">${lv.icon} ${r.score}pt</span>` +
+    ` <span style="font-size:13px;color:var(--text3);font-family:'Share Tech Mono'">60분 ${r.hitCount}회 포착</span>`;
+  document.getElementById('dd-grid').innerHTML=
+    generateChecklistHtml('15분봉',r.br15m)+generateChecklistHtml('1시간봉',r.br1h)+generateChecklistHtml('4시간봉',r.br4h);
+  document.getElementById('ddPanel').classList.add('open');
+}
+function closeDd() { document.getElementById('ddPanel').classList.remove('open'); }
+
+window.onload = handleTopNChange;
+</script>
+</body>
+</html>
